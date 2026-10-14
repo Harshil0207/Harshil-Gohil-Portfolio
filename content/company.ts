@@ -4,11 +4,13 @@ export const company = {
   tagline: "Full-stack developer",
   role: "Portfolio · 2024—2026",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  email: "",
+  email: "harshilgohil2703@gmail.com",
   github: "https://github.com/Harshil0207",
   githubLabel: "github.com/Harshil0207",
   x: "https://x.com/Harshil_2703_",
   xLabel: "@Harshil_2703_",
+  linkedin: "https://www.linkedin.com/in/harshil-gohil-39641a270/",
+  linkedinLabel: "in/harshil-gohil",
   showcase: "https://harshil-haunted-portfolio.vercel.app",
   showcaseLabel: "Hollow Manor — 3D portfolio",
   address: {
@@ -18,7 +20,7 @@ export const company = {
   },
 } as const;
 
-export const contactHref = company.email ? `mailto:${company.email}` : company.x;
+export const contactHref = company.linkedin;
 
 export const copy = {
   heroBody:

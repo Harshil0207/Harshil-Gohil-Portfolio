@@ -87,7 +87,7 @@ const personSchema = {
  * restoration off is the only way to make "every page opens at the top" hold on
  * a reload as well as on a navigation; ScrollReset then does the moving.
  */
-const SCROLL_SCRIPT = `if("scrollRestoration"in history){history.scrollRestoration="manual"}if(!matchMedia("(prefers-reduced-motion: reduce)").matches){document.documentElement.classList.add("intro-lock")}`;
+const SCROLL_SCRIPT = `if("scrollRestoration"in history){history.scrollRestoration="manual"}var seen;try{seen=sessionStorage.getItem("hg-intro")}catch(e){}if(seen){document.documentElement.classList.add("intro-skip")}else if(!matchMedia("(prefers-reduced-motion: reduce)").matches){document.documentElement.classList.add("intro-lock")}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

@@ -11,14 +11,11 @@ const body = encodeURIComponent(
   ),
 );
 
-const primaryHref = company.email
-  ? `${contactHref}?subject=${subject}&body=${body}`
-  : contactHref;
-
 const details = [
   ...(company.email
-    ? [{ label: "Email", value: company.email, href: `mailto:${company.email}` }]
+    ? [{ label: "Email", value: company.email, href: `mailto:${company.email}?subject=${subject}&body=${body}` }]
     : []),
+  { label: "LinkedIn", value: company.linkedinLabel, href: company.linkedin },
   { label: "GitHub", value: company.githubLabel, href: company.github },
   { label: "X", value: company.xLabel, href: company.x },
   { label: "3D portfolio", value: "Hollow Manor", href: company.showcase },
@@ -41,7 +38,10 @@ export function Contact() {
 
             <Magnetic className="mt-10 inline-block">
               <a
-                href={primaryHref}
+                href={contactHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Get in touch on LinkedIn (opens in a new tab)"
                 data-cursor="write"
                 className="group inline-flex items-center gap-4 rounded-full bg-ink px-8 py-5 text-white transition-transform duration-500 ease-out hover:scale-[1.03]"
               >

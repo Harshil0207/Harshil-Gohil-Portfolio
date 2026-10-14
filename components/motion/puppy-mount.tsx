@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 const DogCursor = dynamic(() => import("./dog-cursor"), { ssr: false });
 
@@ -20,5 +20,14 @@ export function PuppyMount() {
     () => window.matchMedia(QUERY).matches,
     () => false,
   );
-  return enabled ? <DogCursor /> : null;
+  const [armed, setArmed] = useState(false);
+
+  useEffect(() => {
+    if (!enabled || armed) return;
+    const arm = () => setArmed(true);
+    window.addEventListener("pointermove", arm, { once: true, passive: true });
+    return () => window.removeEventListener("pointermove", arm);
+  }, [enabled, armed]);
+
+  return enabled && armed ? <DogCursor /> : null;
 }

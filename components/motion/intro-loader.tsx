@@ -42,7 +42,11 @@ export function IntroLoader() {
     const stack = words.current;
     if (!root || !back || !meter || !line || !stack) return;
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem("hg-intro") === "1";
+    } catch {}
+    if (seen || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       finishIntro();
       return;
     }
@@ -117,6 +121,9 @@ export function IntroLoader() {
         gsap
           .timeline({
             onComplete: () => {
+              try {
+                sessionStorage.setItem("hg-intro", "1");
+              } catch {}
               html.classList.remove("intro-lock");
               setSmoothScrollLocked(false);
               setDone(true);

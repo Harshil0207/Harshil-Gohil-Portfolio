@@ -20,7 +20,8 @@ const SIT_AFTER = 0.55;
 const SIT_DOWN = 1.7;
 const SIT_UP = 3.6;
 
-const pointer = { x: 0, y: 0, seen: false };
+const pointer = { x: 0, y: 0, seen: false, moved: 0 };
+const pace = { busy: true };
 
 function shadowTexture() {
   const canvas = document.createElement("canvas");
@@ -133,7 +134,7 @@ function Dog() {
     const restless = desired > 0 || (distance > 12 && facing > 0.9);
     s.still = restless || s.speed > 0 ? 0 : s.still + dt;
     const sitTarget = !restless && s.still > SIT_AFTER ? 1 : 0;
-    s.sit = sitTarget > s.sit ? Math.min(1, s.sit + dt * SIT_DOWN) : Math.max(0, s.sit - dt * SIT_UP);
+    s.sit = sitTarget === 1 ? Math.min(1, s.sit + dt * SIT_DOWN) : Math.max(0, s.sit - dt * SIT_UP);
     if (s.sit > 0.12) desired = 0;
     const accel = desired > s.speed ? 5 : 7;
     s.speed += (desired - s.speed) * Math.min(1, dt * accel);
@@ -172,6 +173,7 @@ function Dog() {
     }
 
     applySit(animation.sit, s.sit);
+    pace.busy = s.speed > 0 || (s.sit > 0 && s.sit < 1) || performance.now() - pointer.moved < 400;
   });
 
   return (
@@ -187,6 +189,22 @@ function Dog() {
   );
 }
 
+function Pacer() {
+  const invalidate = useThree((three) => three.invalidate);
+  useEffect(() => {
+    let frame = 0;
+    let count = 0;
+    const tick = () => {
+      count += 1;
+      if (pace.busy || count % 2 === 0) invalidate();
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [invalidate]);
+  return null;
+}
+
 useGLTF.preload(MODEL);
 
 export default function DogCursor() {
@@ -196,6 +214,7 @@ export default function DogCursor() {
       pointer.x = event.clientX;
       pointer.y = event.clientY;
       pointer.seen = true;
+      pointer.moved = performance.now();
     };
     window.addEventListener("pointermove", onMove, { passive: true });
     return () => window.removeEventListener("pointermove", onMove);
@@ -205,7 +224,8 @@ export default function DogCursor() {
     <div aria-hidden className="pointer-events-none fixed inset-0 z-[69]">
       <Canvas
         orthographic
-        dpr={[1, 1.75]}
+        dpr={1}
+        frameloop="demand"
         gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}
         camera={{ position: [0, 820, 620], zoom: 1, near: 1, far: 4000 }}
         onCreated={({ camera }) => camera.lookAt(0, 0, 0)}
@@ -214,6 +234,7 @@ export default function DogCursor() {
         <hemisphereLight args={["#fffaf2", "#6b6157", 1.25]} />
         <directionalLight position={[260, 900, 520]} intensity={1.7} />
         <directionalLight position={[-400, 300, -300]} intensity={0.5} color="#bcd7ff" />
+        <Pacer />
         <Dog />
       </Canvas>
     </div>

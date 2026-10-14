@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, Asterisk } from "@/components/icons";
 import { Reveal } from "@/components/motion/reveal";
 import { FittedLine } from "./fitted-line";
+import { HeroVideo } from "./hero-video";
 import { StackShowcase } from "./stack-showcase";
 import { company, copy } from "@/content/company";
 import { projectsByAgency } from "@/content/projects";
@@ -35,8 +36,10 @@ export function HeroMerge() {
       {/* The claim sits still on one line, solved to fill the frame edge to
           edge — one line of this phrase is geometrically capped, so measuring is
           what makes it as large as it can be. */}
-      <div className="border-b border-line-on-field px-4 py-8 md:px-6 md:py-10">
-        <FittedLine />
+      <div className="border-b border-line-on-field">
+        <HeroVideo>
+          <FittedLine />
+        </HeroVideo>
       </div>
 
       <div className="border-b border-line-on-field px-4 py-5 md:px-6 md:py-7">

@@ -25,6 +25,12 @@ export function Footer() {
             </a>
           ) : null}
           <Link
+            href={company.linkedin}
+            className="text-white/80 hover:text-acid-lift"
+          >
+            LinkedIn
+          </Link>
+          <Link
             href={company.github}
             className="text-white/80 hover:text-acid-lift"
           >

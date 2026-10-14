@@ -104,27 +104,154 @@ function Sundial({
   );
 }
 
-function LocalPlace({ clock }: { clock: Clock | null }) {
+function phaseOf(hours: number) {
+  if (hours < 5) return "Night";
+  if (hours < 12) return "Morning";
+  if (hours < 17) return "Afternoon";
+  if (hours < 20) return "Evening";
+  return "Night";
+}
+
+const SKY: [number, string, string][] = [
+  [0, "#060a1c", "#151a3d"],
+  [4.5, "#0d1230", "#2a2552"],
+  [6, "#2e3a78", "#f2956a"],
+  [7.5, "#4f88d4", "#f7c896"],
+  [10, "#2f84e2", "#9dd1ff"],
+  [15, "#3383dc", "#a7d6ff"],
+  [17.4, "#4a68b4", "#f6ae78"],
+  [18.6, "#352f6e", "#ec6f63"],
+  [19.8, "#141a46", "#4b3466"],
+  [21.5, "#070b20", "#171c40"],
+  [24, "#060a1c", "#151a3d"],
+];
+
+function mix(a: string, b: string, t: number) {
+  const pa = parseInt(a.slice(1), 16);
+  const pb = parseInt(b.slice(1), 16);
+  const channel = (shift: number) =>
+    Math.round(((pa >> shift) & 255) + (((pb >> shift) & 255) - ((pa >> shift) & 255)) * t);
+  return `rgb(${channel(16)} ${channel(8)} ${channel(0)})`;
+}
+
+function skyAt(hours: number) {
+  for (let index = 0; index < SKY.length - 1; index += 1) {
+    const [h0, top0, low0] = SKY[index];
+    const [h1, top1, low1] = SKY[index + 1];
+    if (hours >= h0 && hours <= h1) {
+      const t = (hours - h0) / (h1 - h0);
+      return { top: mix(top0, top1, t), low: mix(low0, low1, t) };
+    }
+  }
+  return { top: SKY[0][1], low: SKY[0][2] };
+}
+
+const STARS: [number, number, number][] = [
+  [22, 24, 0],
+  [64, 18, 0.6],
+  [78, 38, 1.2],
+  [40, 12, 1.8],
+  [30, 44, 0.9],
+  [55, 34, 2.1],
+];
+
+function RollDigit({ value }: { value: string }) {
+  const n = Number(value);
   return (
-    <div className="flex items-center gap-3">
-      <Sundial hours={clock?.hours ?? null} />
-      <div className="leading-none">
-        <p className="text-[0.9375rem] font-medium tabular-nums tracking-[-0.01em]">
+    <span className="lc-digit" aria-hidden>
+      <span className="lc-strip" style={{ transform: `translateY(${Number.isNaN(n) ? 0 : -n}em)` }}>
+        {"0123456789".split("").map((d) => (
+          <span key={d}>{d}</span>
+        ))}
+      </span>
+    </span>
+  );
+}
+
+function Porthole({ clock }: { clock: Clock | null }) {
+  const hours = clock?.hours ?? 12;
+  const day = hours >= SUNRISE && hours <= SUNSET;
+  const progress = day
+    ? (hours - SUNRISE) / (SUNSET - SUNRISE)
+    : ((hours < SUNRISE ? hours + 24 : hours) - SUNSET) / (24 - (SUNSET - SUNRISE));
+  const angle = Math.PI * (1 - progress);
+  const x = 50 + Math.cos(angle) * 36;
+  const y = 70 - Math.sin(angle) * 46;
+  const sky = skyAt(hours);
+  const glow = day ? Math.sin(Math.PI * progress) : 0;
+  const ring = (hours / 24) * 100;
+
+  return (
+    <span
+      className={`lc-port ${clock ? "" : "is-idle"} ${day ? "is-day" : "is-night"}`}
+      style={{
+        ["--sky-top" as string]: sky.top,
+        ["--sky-low" as string]: sky.low,
+        ["--glow" as string]: glow.toFixed(2),
+      }}
+    >
+      <svg viewBox="0 0 44 44" className="lc-ring" aria-hidden>
+        <circle cx="22" cy="22" r="20.5" pathLength={100} className="lc-ring-track" />
+        <circle
+          cx="22"
+          cy="22"
+          r="20.5"
+          pathLength={100}
+          className="lc-ring-fill"
+          style={{ strokeDasharray: `${ring.toFixed(2)} 100` }}
+        />
+      </svg>
+      <span className="lc-sky">
+        {STARS.map(([sx, sy, delay], index) => (
+          <i key={index} className="lc-star" style={{ left: `${sx}%`, top: `${sy}%`, animationDelay: `${delay}s` }} />
+        ))}
+        <span
+          className={day ? "lc-sun" : "lc-moon"}
+          style={{ left: `${x.toFixed(2)}%`, top: `${y.toFixed(2)}%` }}
+        />
+        <svg viewBox="0 0 40 12" preserveAspectRatio="none" className="lc-city" aria-hidden>
+          <path d="M0 12V8h3V5h3v3h2V3h4v5h2V6h3V2l2-1 2 1v6h3V5h4v3h2V4h3v4h3v4z" />
+        </svg>
+        <span className="lc-gloss" />
+      </span>
+    </span>
+  );
+}
+
+function LocalPlace({ clock }: { clock: Clock | null }) {
+  const label = clock
+    ? `${clock.h}:${clock.m} in ${company.address.city}, India`
+    : `Local time in ${company.address.city}`;
+  return (
+    <div className="lc" aria-label={label} role="img">
+      <Porthole clock={clock} />
+      <div className="lc-text">
+        <p className="lc-time">
           {clock ? (
             <>
-              {clock.h}
-              <span className="animate-[pulse_2s_ease-in-out_infinite] motion-reduce:animate-none">:</span>
-              {clock.m}
-              <span className="ml-0.5 text-[0.75rem] text-on-field-3">{clock.s}</span>
+              <RollDigit value={clock.h[0]} />
+              <RollDigit value={clock.h[1]} />
+              <span className="lc-colon">:</span>
+              <RollDigit value={clock.m[0]} />
+              <RollDigit value={clock.m[1]} />
+              <span className="lc-sec">
+                <RollDigit value={clock.s[0]} />
+                <RollDigit value={clock.s[1]} />
+              </span>
             </>
           ) : (
-            "--:--"
+            <span className="lc-placeholder">--:--</span>
           )}
-          <span className="ml-1.5 text-[0.75rem] font-normal text-on-field-3">IST</span>
         </p>
-        <p className="mt-1.5 text-[0.75rem] text-on-field-3">
-          {company.address.city}, India <span className="hidden 2xl:inline">· {COORDS}</span>
+        <p className="lc-meta">
+          <span>{company.address.city}</span>
+          <span className="lc-sep" />
+          <span className="lc-phase">{clock ? phaseOf(clock.hours) : "IST"}</span>
         </p>
+      </div>
+      <div className="lc-more" aria-hidden>
+        <span>GMT+5:30</span>
+        <span>{COORDS}</span>
       </div>
     </div>
   );
@@ -229,9 +356,9 @@ export function Header() {
       ref={scope}
       data-open={open}
       style={{ viewTransitionName: "site-header" }}
-      className={`fixed inset-x-0 top-0 z-50 text-on-field transition-[background-color,border-color,backdrop-filter] duration-500 ${
+      className={`fixed inset-x-0 top-0 z-50 text-on-field transition-[background-color,border-color] duration-500 ${
         solid || open
-          ? "border-b border-line-on-field bg-field/88 backdrop-blur-md"
+          ? "border-b border-line-on-field bg-field/95"
           : "border-b border-transparent bg-transparent"
       }`}
     >
@@ -289,7 +416,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center justify-end gap-2 md:gap-3">
-          <div className="hidden items-center border-r border-line-on-field pr-5 md:flex">
+          <div className="hidden items-center md:flex">
             <LocalPlace clock={clock} />
           </div>
           <ThemeToggle />

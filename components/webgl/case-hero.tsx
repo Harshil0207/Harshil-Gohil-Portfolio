@@ -3,6 +3,7 @@
 import "@/lib/three-console";
 
 import { useMemo, useRef } from "react";
+import { useInView } from "@/lib/use-in-view";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import { Color, ShaderMaterial, Texture } from "three";
@@ -101,11 +102,14 @@ export default function CaseHero({
   accent: string;
   onContextLost?: () => void;
 }) {
+  const { ref, inView } = useInView<HTMLDivElement>("100px");
   return (
+    <div ref={ref} style={{ position: "absolute", inset: 0 }}>
     <Canvas
-      dpr={[1, 2]}
+      dpr={[1, 1.5]}
+      frameloop={inView ? "always" : "never"}
       camera={{ position: [0, 0, 5], fov: 30 }}
-      gl={{ antialias: true, alpha: true }}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       style={{ position: "absolute", inset: 0 }}
       onCreated={({ gl }) => {
         gl.domElement.addEventListener("webglcontextlost", () =>
@@ -115,5 +119,6 @@ export default function CaseHero({
     >
       <Plane image={image} accent={accent} />
     </Canvas>
+    </div>
   );
 }

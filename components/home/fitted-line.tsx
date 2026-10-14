@@ -150,7 +150,7 @@ export function FittedLine() {
       data-cursor-grow
       // w-max plus the fit's holdback leaves a little slack; mx-auto splits it
       // evenly instead of stacking it all on the right.
-      className="mx-auto flex w-max items-center gap-[0.015em] whitespace-nowrap font-display uppercase leading-[0.9] tracking-[-0.005em]"
+      className="mx-auto flex w-max items-center gap-[0.015em] whitespace-nowrap font-display text-[calc((100vw-2rem)*0.222)] uppercase leading-[0.9] tracking-[-0.005em] md:text-[calc((100vw-3rem)*0.222)]"
     >
       {"Harshil".split("").map((letter, index) => (
         <span key={index} aria-hidden className="inline-block will-change-transform">
